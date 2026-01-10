@@ -13,7 +13,7 @@ All programs have been tested with ESP32 C3 microcontrollers.
 4) E-ink Project
 5) INA219
 
-## Installation Instructions
+## ESP32 Installation Instructions
 1) Download the Arduino IDE onto your computer from the Arduino website. https://www.arduino.cc
 2) Open the IDE and navigate to the Board's Manager. You will find the board’s manager on the menu on the left side of the window. Search for ‘esp32 Espressif Systems’ and click install.
 3) Connect your board to your computer with a USB cable.
