@@ -11,5 +11,6 @@ All programs have been tested with ESP32 C3 microcontrollers.
 2) Solar Simon - A simple game using the solar power as a game mechanic.
 3) Solar Hotspot - A simple solar powered wifi network
 4) E-ink Project
+5) INA219
 
 ## Installation Instructions
