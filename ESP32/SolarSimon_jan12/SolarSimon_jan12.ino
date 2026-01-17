@@ -5,14 +5,14 @@ January 9, 2026
 
 Press the buttons corresponding to the sequence shown.
 Every round another step is added to the sequence.
-The speed is determined by the battery, getting faster as it depletes.
+The speed is determined by the supercap, getting faster as it depletes.
 */
 
 //GPIO variables - the specific I/O pins you use may vary with the board
 const int LED_A = 2; //the pin corresponding to button A
 const int LED_B = 3; //the pin corresponding to button B
 const int LED_C = 4; //the pin corresponding to button C
-int ledPins[] = {LED_A,LED_B,LED_C};
+int ledPins[] = {LED_A,LED_B,LED_C}; // This is an array. It holds the pin numbers for our LEDs.
 
 const int cPin = 0; // the pin used to read the capacitor voltage - connected to the middle of the voltage divider
 float cVal = 0; // the variable used to store calibrated millivoltage
@@ -20,12 +20,12 @@ float cVal = 0; // the variable used to store calibrated millivoltage
 const int bPin = 1; // the pin used to read the button value
 int bVal = 0; // the variable used to store the button value
 
-// the array to store each step in the sequence
+// the array to store each step in the LED sequence
 const int sequenceLen = 100;
-int sequence[sequenceLen];
+int sequence[sequenceLen]; //This is another array. Its going to start off empty.
 int position = 0;
 
-bool yourTurn = false;
+bool yourTurn = false; // a boolean is a type of variable that is either true or false
 
 int seedValue = 0;
 
@@ -40,11 +40,9 @@ void flash(int t){
   digitalWrite(LED_C, LOW);
 }
 
-// check the state of the button
+// check which button is pressed
 int getButtonNumber(){
   bVal = analogRead(bPin);
-  // Serial.print("Raw Button: ");
-  // Serial.println(bVal);
 
   float bStep = 4095 / 4; // divide the range into segments
   int bOffset = bStep * 0.5; //offset the button value to avoid false positives
@@ -59,24 +57,23 @@ int getButtonNumber(){
   return 4; // no button pressed
 }
 
-
-// reset seed here too!
+// this function restarts key variables and signals the user that  the game is about to begin
 void restart(){
   Serial.println("Restarting!");
 
-  // call the flash function 3x
   int flashTime = 250;
   flash(flashTime);
   delay(flashTime);
   flash(flashTime);
   delay(flashTime);
   flash(flashTime);
+  delay(flashTime);
 
   //Set the random seed based on the raw value of the capacitor
   seedValue = analogRead(cPin);
   randomSeed(seedValue);
-  Serial.print("Seed value: ");
-  Serial.println(seedValue);
+  // Serial.print("Seed value: ");
+  // Serial.println(seedValue);
 
   //reset variables
   yourTurn = false;
@@ -96,13 +93,12 @@ void setup() {
   //set the resolution to 12 bits (0-4095)
   analogReadResolution(12);
 
+  // start the game
   restart();
 }
 
 // this code loops forever
 void loop() {
-  Serial.print("Your turn: ");
-  Serial.println(yourTurn);
 
   if(yourTurn == false){
     // read the calibrated value
@@ -110,74 +106,69 @@ void loop() {
 
     //scale and convert to volts - default analog in range for ESP32 C3 = 0 – 4095, corresponding to 0V-3.3V
     float capVoltage = cVal * 2 * 0.001; // change '2' to match supercap voltage divider ratio if needed
-    Serial.println("");
-    Serial.print("Volts: ");
-    Serial.println(capVoltage);
 
-    // map the voltage from 3V-5V to 500ms-1500ms
-    int speed = map(int(100*capVoltage), 300, 500, 500, 2000);
+    // map the voltage from 3V-5V to 300ms-1500ms
+    int speed = map(int(100*capVoltage), 300, 500, 250, 1500);
     speed = max(100, speed); // ensures speed doesn't drop below 100ms
+    Serial.println("");
+    Serial.print("Speed: ");
+    Serial.println(speed);
 
-    // choose and store the next value
-    int n = random(0,3);
-    sequence[position] = n;
+    int n = random(0,3); // randomly choose the next value
+    sequence[position] = n;//add the new value to the sequence array
+
+    Serial.print("Round: ");
+    Serial.println(position+1);
 
     // show the sequence
     for (int s = 0; s <= position; s++){
       // get LED
       int p = sequence[s];
       // blink the LED at rate proportional to the capacitor charge state
+      delay(speed);
       digitalWrite(ledPins[p], HIGH);
       delay(speed);
       digitalWrite(ledPins[p], LOW);
-      delay(speed);
     }
 
     yourTurn = true;
   } else {
-    int timer = 0;
+    Serial.println("Your turn!");
+
+    int loops = 0;
+    int maxLoops = 1000;
     int attemptPos = 0;
-    int maxTime = 1000;
 
-    while(timer <= maxTime){
-
-      // Serial.print("target: ");
-      // Serial.println(sequence[attemptPos]);
-
+    while(loops <= maxLoops){
       //great job! next round
       if(attemptPos>position){
         yourTurn = false;
         // increment position
         position++;
-        Serial.println("next round");
-        break;
+        break; // break out of the while loop
       } 
-
       //check attempt
       bVal = getButtonNumber();
-      if (bVal != 4){
-        Serial.print("Button: ");
-        Serial.println(bVal);
+      if (bVal != 4){ 
         // good job!
         if (bVal == sequence[attemptPos]){
           attemptPos++;
-          Serial.print("Attempt pos: ");
-          Serial.println(attemptPos);
-          timer = 0; // reset timer
-          delay(350); // gives a little time to release the button
+          loops = 0; // reset loop count
+          delay(350); // gives a little time to release the button - if button presses are being double counted, increase this. If they are not being counted, decrease this.
         } else {
           // you pressed the wrong button!
           restart();
+          break;
         }
       }
-      //increment the timer
-      timer++;
+      //increment the loop count
+      loops++;
 
-      if (timer >= maxTime){
+      if (loops >= maxLoops){
         // you ran out of time!
         restart();
       }
-      //delay time x maxTime = actual time to enter the next step in the sequence
+      //delay time x maxLoops = actual time to enter the next step in the sequence
       delay(10);
     }
   }
