@@ -107,8 +107,8 @@ void loop() {
     //scale and convert to volts - default analog in range for ESP32 C3 = 0 – 4095, corresponding to 0V-3.3V
     float capVoltage = cVal * 2 * 0.001; // change '2' to match supercap voltage divider ratio if needed
 
-    // map the voltage from 3V-5V to 300ms-1500ms
-    int speed = map(int(100*capVoltage), 300, 500, 250, 1500);
+    // map the voltage from 3V-5V to 250ms-1500ms
+    int speed = map(int(100*capVoltage), 300, 500, 250, 1250);
     speed = max(100, speed); // ensures speed doesn't drop below 100ms
     Serial.println("");
     Serial.print("Speed: ");
@@ -154,7 +154,7 @@ void loop() {
         if (bVal == sequence[attemptPos]){
           attemptPos++;
           loops = 0; // reset loop count
-          delay(350); // gives a little time to release the button - if button presses are being double counted, increase this. If they are not being counted, decrease this.
+          delay(300); // gives a little time to release the button - if button presses are being double counted, increase this. If they are not being counted, decrease this.
         } else {
           // you pressed the wrong button!
           restart();
